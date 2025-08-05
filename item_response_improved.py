@@ -2,7 +2,7 @@ from utils import (
     load_train_csv,
     load_valid_csv,
     load_public_test_csv,
-    load_train_sparse,
+    load_cleaned_subject_meta_csv
 )
 import numpy as np
 import matplotlib.pyplot as plt
