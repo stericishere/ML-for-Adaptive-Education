@@ -78,8 +78,8 @@ def write_to_csv(path = "./data/cleaned_subject_meta.csv"):
         writer = csv.writer(csv_file)
         cleaned_data = subject_that_exist(load_question_meta())
         subject = load_subject_meta_csv()
-        for subject_id in cleaned_data:
-            writer.writerow([subject_id, subject[subject_id]])
+        for i, subject_id in enumerate(cleaned_data):
+            writer.writerow([i, subject[subject_id]])
 
 def main():
     write_to_csv()

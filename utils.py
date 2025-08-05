@@ -190,3 +190,25 @@ def sparse_matrix_predictions(data, matrix, threshold=0.5):
         else:
             predictions.append(0.0)
     return predictions
+
+
+def load_cleaned_subject_meta_csv(root_dir="./data"):
+    path = os.path.join(root_dir, "subject_meta.csv")
+    if not os.path.exists(path):
+        raise Exception("The specified path {} does not exist.".format(path))
+    # Initialize the data.
+    data = {}
+    # Iterate over the row to fill in the data.
+    with open(path, "r") as csv_file:
+        reader = csv.reader(csv_file)
+        for row in reader:
+            try:
+                data[int(row[0])] = row[1]
+            except ValueError:
+                # Pass first row.
+                pass
+            except IndexError:
+                # is_correct might not be available.
+                pass
+    return data
+# /data/subject_meta.csv
