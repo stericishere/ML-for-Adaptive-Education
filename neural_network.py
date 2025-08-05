@@ -200,7 +200,7 @@ def main():
     # validation set.                                                   #
     #####################################################################
     # Set model hyperparameters.
-    k = [10, 50, 100, 200, 500]
+    k = [10, 50, 100, 200, ]#500]
     model = AutoEncoder(num_question=train_matrix.shape[1], k=50)
     # Set optimization hyperparameters.
     lr = 0.01
@@ -238,9 +238,12 @@ def main():
             'train_losses': train_losses,
             'valid_accuracies': valid_accs
         }
-    print(results)
+    for i in results:
+        print(f"k: {i}")
+        print(f"Valid accuracy: {results[i]['valid_accuracy']:.4f}")
+        print(f"Test accuracy: {results[i]['test_accuracy']:.4f}")
     
-    k_star = max(results, key=results.get('test_accuracy'))
+    k_star = max(result['test_accuracy'] for result in results.values())
     print(f"Best k: {k_star}")
     print(f"Best test accuracy: {results[k_star]['test_accuracy']:.4f}")
     
@@ -255,10 +258,10 @@ def main():
     plt.show()
     
     # Part (e): Try different learning rates
-    print("Part (e): Trying different learning rates...")
-    lr = [0.001, 0.01, 0.1, 1.0]
-    for lr in lr:
-        print(f"\nTraining with lr={lr}")
+    print("Part (e): Trying different λ...")
+    lamb_list  = [0.001, 0.01, 0.1, 1.0]
+    for lamb in lamb_list :
+        print(f"\nTraining with λ={lamb}")
         model = AutoEncoder(num_question=train_matrix.shape[1], k=k_star)
         train_losses, valid_accs = train(
             model, lr, lamb, train_matrix, zero_train_matrix, 
@@ -266,6 +269,20 @@ def main():
         )
         valid_acc = evaluate(model, zero_train_matrix, valid_data)
         test_acc = evaluate(model, zero_train_matrix, test_data)
+        results[lamb] = {
+            'valid_accuracy': valid_acc,
+            'test_accuracy': test_acc,
+            'train_losses': train_losses,
+            'valid_accuracies': valid_accs
+        }
+    print(results)
+    lamb_star = max(result['test_accuracy'] for result in results.values())
+
+    print(f"Best λ: {lamb_star}")
+    print(f"Best test accuracy: {results[lamb_star]['test_accuracy']:.4f}")
+    
+    # Plot the training and validation losses
+    plt.figure(figsize=(10, 5))
 
     # Evaluate the model on the test data
     #####################################################################
