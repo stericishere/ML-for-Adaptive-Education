@@ -119,13 +119,16 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
     # Lists to store training losses and validation accuracies
     train_losses = []
     valid_accs = []
+    valid_losses = []
     
     best_model = None
     best_valid_acc = 0.0
 
     # Training loop
     for epoch in range(0, num_epoch):
-        train_loss = 0.0
+        loss = 0.0
+        epoch_reconstruction_loss = 0.0
+        num_interactions = 0
 
         for user_id in range(num_student):
             inputs = Variable(zero_train_data[user_id]).unsqueeze(0)
@@ -137,29 +140,30 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
             # Mask the target to only compute the gradient of valid entries.
             nan_mask = np.isnan(train_data[user_id].unsqueeze(0).numpy())
             target[nan_mask] = output[nan_mask]
-
-            loss = torch.sum((output - target) ** 2.0)
+            # mask = ~torch.from_numpy(nan_mask)
+            reconstruction_loss = torch.sum((output - target) ** 2.0)
             
+            loss = reconstruction_loss
             # Add L2 regularization if lamb > 0
             if lamb > 0:
                 regularizer = model.get_weight_norm()
                 loss += (lamb / 2) * regularizer
                 
             loss.backward()
-            train_loss += loss.item()
             optimizer.step()
+            epoch_reconstruction_loss += reconstruction_loss.item()
+            num_interactions += (~nan_mask).sum()
 
-        valid_acc = evaluate(model, zero_train_data, valid_data)
-        train_losses.append(train_loss)
+        valid_acc, total_loss = evaluate(model, zero_train_data, valid_data)
+        train_losses.append(epoch_reconstruction_loss / num_interactions)
         valid_accs.append(valid_acc)
-        
-        # Update best model if current validation accuracy is higher
-        if valid_acc > best_valid_acc:
-            best_valid_acc = valid_acc
-            best_model = model.state_dict()
-
-    model.load_state_dict(best_model)
-    return train_losses, valid_accs
+        valid_losses.append(total_loss)
+        print(
+            "Epoch: {} \tTraining Cost: {:.6f}\t " "Valid Acc: {}\t " "Valid loss: {}".format(
+                epoch, epoch_reconstruction_loss / num_interactions, valid_acc, total_loss
+            )
+        )
+    return train_losses, valid_losses
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -179,16 +183,23 @@ def evaluate(model, train_data, valid_data):
 
     total = 0
     correct = 0
+    total_loss = 0.0
 
     for i, u in enumerate(valid_data["user_id"]):
         inputs = Variable(train_data[u]).unsqueeze(0)
         output = model(inputs)
 
-        guess = output[0][valid_data["question_id"][i]].item() >= 0.5
+        prob = output[0][valid_data["question_id"][i]].item()
+        guess = prob >= 0.5
         if guess == valid_data["is_correct"][i]:
             correct += 1
+        
+        total_loss += (prob - valid_data["is_correct"][i]) ** 2
         total += 1
-    return correct / float(total)
+    accuracy = correct / float(total)
+    total_loss = total_loss/total
+    return accuracy, total_loss    
+
 
 
 def main():
@@ -200,62 +211,92 @@ def main():
     # validation set.                                                   #
     #####################################################################
     # Set model hyperparameters.
-    k = [10, 50, 100, 200, ]#500]
+    k = 50
     model = AutoEncoder(num_question=train_matrix.shape[1], k=50)
     # Set optimization hyperparameters.
     lr = 0.01
-    num_epoch = 45
+    num_epoch = 38
     # Set regularization for initial model
     lamb = 0.0
     # lamb = 0.1
-
-    train(model, lr, lamb, train_matrix, zero_train_matrix, valid_data, num_epoch)
     
     # Part (a): Evaluate the model on validation/test data
     print("Part (a): Evaluating the model with lamb=0.0 on validation/test data")
     # Next, evaluate your network on validation/test data
-    valid_acc = evaluate(model, zero_train_matrix, valid_data)
+    valid_acc, loss = evaluate(model, zero_train_matrix, valid_data)
     print(f"Validation accuracy: {valid_acc:.4f}")
 
-    test_acc = evaluate(model, zero_train_matrix, test_data)
+    test_acc, loss = evaluate(model, zero_train_matrix, test_data)
     print(f"Test accuracy: {test_acc:.4f}")
     
     # Part (c): Try different k values
     results = {}
     print("Part (c): Testing different k values...")
-    for k in k:
-        print(f"\nTraining with k={k}")
-        model = AutoEncoder(num_question=train_matrix.shape[1], k=k)
-        train_losses, valid_accs = train(
-            model, lr, lamb, train_matrix, zero_train_matrix, 
-            valid_data, num_epoch
-        )
-        valid_acc = evaluate(model, zero_train_matrix, valid_data)
-        test_acc = evaluate(model, zero_train_matrix, test_data)
-        results[k] = {
-            'valid_accuracy': valid_acc,
-            'test_accuracy': test_acc,
-            'train_losses': train_losses,
-            'valid_accuracies': valid_accs
-        }
-    for i in results:
-        print(f"k: {i}")
-        print(f"Valid accuracy: {results[i]['valid_accuracy']:.4f}")
-        print(f"Test accuracy: {results[i]['test_accuracy']:.4f}")
+    # for i in k:
+    #     print(f"\nTraining with k={i}")
+    #     model = AutoEncoder(num_question=train_matrix.shape[1], k=i)
+    #     train_losses, valid_accs = train(
+    #         model, lr, lamb, train_matrix, zero_train_matrix, 
+    #         valid_data, num_epoch
+    #     )
+    #     valid_acc = evaluate(model, zero_train_matrix, valid_data)
+    #     test_acc = evaluate(model, zero_train_matrix, test_data)
+    #     results[i] = {
+    #         'valid_accuracy': valid_acc,
+    #         'test_accuracy': test_acc,
+    #         'train_losses': train_losses,
+    #         'valid_losses': valid_accs
+    #     }
     
-    k_star = max(result['test_accuracy'] for result in results.values())
-    print(f"Best k: {k_star}")
-    print(f"Best test accuracy: {results[k_star]['test_accuracy']:.4f}")
+    k_star = 50
+    # print(f"\nTraining with k={k_star}")
+    # model = AutoEncoder(num_question=train_matrix.shape[1], k=k_star)
+    # train_losses, valid_losses = train(
+    #     model, lr, lamb, train_matrix, zero_train_matrix, 
+    #     valid_data, num_epoch
+    # )
+    # valid_acc, loss = evaluate(model, zero_train_matrix, valid_data)
+    # test_acc, loss = evaluate(model, zero_train_matrix, test_data)
+    # results[k_star] = {
+    #     'valid_accuracy': valid_acc,
+    #     'test_accuracy': test_acc,
+    #     'train_losses': train_losses,
+    #     'valid_losses': valid_losses
+    # }
+    # max_test = 0
+    # for i in results:
+    #     if results[i]['valid_accuracy'] > max_test:
+    #         k_star = i
+    #         max_test = results[i]['valid_accuracy']
+    #     print(f"k: {i}")
+    #     print(f"Valid accuracy: {results[i]['valid_accuracy']:.4f}")
+    #     print(f"Test accuracy: {results[i]['test_accuracy']:.4f}")
+        
+    # print(f"Best k: {k_star}")
+    # print(f"Best test accuracy: {results[k_star]['test_accuracy']:.4f}")
+
+    # valid_accuracies = [results[i]['valid_accuracy'] for i in results]
     
-    # Plot the training and validation losses
-    plt.figure(figsize=(10, 5))
-    plt.plot(results[k_star]['train_losses'], label='Training Loss')
-    plt.plot(results[k_star]['valid_accuracy'], label='Validation Accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss/Accuracy')
-    plt.title(f'Training and Validation Losses for k={k_star}')
-    plt.legend()
-    plt.show()
+    # # plt.figure(figsize=(10, 6))
+    # # plt.plot(k, valid_accuracies, marker='o', linestyle='-', color='b')
+    # # plt.title('Space Dimension (k) v.s. Validation Accuracy')
+    # # plt.xlabel('Dimension of Latent Space (k)')
+    # # plt.ylabel('Validation Accuracy')
+    # # plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    # # plt.xticks(k)
+    # # plt.show()
+
+
+  
+    # # Plot the training and validation losses
+    # plt.figure(figsize=(10, 5))
+    # plt.plot(results[k_star]['train_losses'], label='Training Loss')
+    # plt.plot(results[k_star]['valid_losses'], label='Validation Loss')
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Training Loss/Validation Loss')
+    # plt.title(f'Training and Validation Losses for k={k_star}')
+    # plt.legend()
+    # plt.show()
     
     # Part (e): Try different learning rates
     print("Part (e): Trying different λ...")
@@ -267,22 +308,39 @@ def main():
             model, lr, lamb, train_matrix, zero_train_matrix, 
             valid_data, num_epoch
         )
-        valid_acc = evaluate(model, zero_train_matrix, valid_data)
-        test_acc = evaluate(model, zero_train_matrix, test_data)
+        valid_acc, loss = evaluate(model, zero_train_matrix, valid_data)
+        test_acc, loss = evaluate(model, zero_train_matrix, test_data)
         results[lamb] = {
             'valid_accuracy': valid_acc,
             'test_accuracy': test_acc,
             'train_losses': train_losses,
-            'valid_accuracies': valid_accs
+            'loss': valid_accs
         }
     print(results)
-    lamb_star = max(result['test_accuracy'] for result in results.values())
+    lamb_star = -1
+    max_test = -1
+
+    for key, value in results.items():
+        if value['valid_accuracy'] > max_test:
+            max_test = value['valid_accuracy']
+            lamb_star = key
 
     print(f"Best λ: {lamb_star}")
+    print(f"Best validation accuracy: {results[lamb_star]['valid_accuracy']:.4f}")
     print(f"Best test accuracy: {results[lamb_star]['test_accuracy']:.4f}")
+    valid_accuracy = [results[i]['valid_accuracy'] for i in results]
     
     # Plot the training and validation losses
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(10, 6))
+    plt.plot(lamb_list, valid_accuracy, marker='o', linestyle='-', color='b')
+    plt.title('Lamb values v.s. Validation Accuracy')
+    plt.xlabel('Lamb values')
+    plt.ylabel('Validation Accuracy')
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.xticks(lamb_list)
+    plt.xscale('log')
+    plt.show()
+    
 
     # Evaluate the model on the test data
     #####################################################################

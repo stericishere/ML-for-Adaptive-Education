@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import ast
+import pickle
 
 def sigmoid(x):
     """Apply sigmoid function."""
@@ -238,19 +239,19 @@ class SubjectIRT:
         """
         correct = 0
         total = 0
-        
+
         for i in range(len(data["user_id"])):
             user_id = data["user_id"][i]
             question_id = data["question_id"][i]
             is_correct = data["is_correct"][i]
-            
+
             prob = self.predict_probability(user_id, question_id)
             prediction = prob >= 0.5
-            
+
             if prediction == is_correct:
                 correct += 1
             total += 1
-        
+
         return correct / total if total > 0 else 0.0
     
     def fit(self, train_data, val_data, lr=0.001, iterations=1000):
@@ -324,6 +325,11 @@ def main():
     
     print(f"\nFinal Validation Accuracy: {final_val_acc:.4f}")
     print(f"Test Accuracy: {test_acc:.4f}")
+    
+    model_save_path = "subject_irt_model.pkl"
+    with open(model_save_path, 'wb') as file:
+        pickle.dump(model, file)
+    print(f"Model saved directly to {model_save_path}")
     
     # Plot training curves
     plt.figure(figsize=(12, 4))
