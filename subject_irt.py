@@ -118,6 +118,30 @@ class SubjectIRT:
         probability = b + (1 - b) * sig
         return probability
     
+    def predict_probabilities(self, data):
+        """Generate probability predictions for data.
+        
+        Args:
+            data: Dictionary with user_id, question_id lists
+            
+        Returns:
+            tuple: (predictions, probabilities)
+        """
+        preds = []
+        probs = []
+        
+        for i in range(len(data["user_id"])):
+            u = data["user_id"][i]
+            q = data["question_id"][i]
+
+            # Use the predict_probability method for consistency
+            p = self.predict_probability(u, q)
+
+            probs.append(p)
+            preds.append(p >= 0.5)
+
+        return preds, probs
+
     def neg_log_likelihood(self, data):
         """Compute negative log-likelihood for the data.
         
