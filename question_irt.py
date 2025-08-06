@@ -17,38 +17,38 @@ class QuestionIRT:
     
     def __init__(self, num_students, num_questions):
         """Initialize Question IRT model.
-        
+
         Args:
             num_students: Number of students
             num_questions: Number of questions
         """
         self.num_students = num_students
         self.num_questions = num_questions
-        
+
         # Initialize parameters
         self._initialize_parameters()
-    
+
     def _initialize_parameters(self):
         """Initialize model parameters."""
         # Student abilities
         self.theta = np.zeros(self.num_students)
-        
+
         # Question difficulties
         self.beta = np.zeros(self.num_questions)
-        
+
         # Question discrimination parameters
         self.a_list = np.ones(self.num_questions)
-        
+
         # Question guessing parameters
         self.b_list = np.full(self.num_questions, 0.0005)
-    
+
     def predict_probability(self, student_id, question_id):
         """Predict probability of correct answer for student-question pair.
-        
+
         Args:
             student_id: ID of the student
             question_id: ID of the question
-            
+
         Returns:
             float: Probability of correct answer
         """
@@ -56,13 +56,13 @@ class QuestionIRT:
         b = self.b_list[question_id]
         beta = self.beta[question_id]
         theta = self.theta[student_id]
-        
+
         diff = theta - beta
         sig = sigmoid(a * diff)
-        
+
         probability = b + (1 - b) * sig
         return probability
-    
+
     def neg_log_likelihood(self, data):
         """Compute the negative log-likelihood.
 
@@ -89,12 +89,12 @@ class QuestionIRT:
             # Compute log likelihood using 3PL formula
             prob_correct = b + (1-b) * sig
             prob_correct = np.clip(prob_correct, 1e-9, 1 - 1e-9)  # Avoid log(0)
-            
+
             if c:
                 log_likelihood += np.log(prob_correct)
             else:
                 log_likelihood += np.log(1 - prob_correct)
-        
+
         return -log_likelihood
 
     def update_parameters(self, data, lr):
@@ -120,13 +120,14 @@ class QuestionIRT:
             c = is_correct[i]
             a = self.a_list[quest_id]
             b = self.b_list[quest_id]
-
+            
             diff = self.theta[user_id] - self.beta[quest_id]
             sig = sigmoid(a * diff)
+            prob_correct = b + (1-b) * sig
+            prob_correct = np.clip(prob_correct, 1e-9, 1-1e-9) # Avoid division by zero
 
-            first_term = (c / (b + (1-b) * sig)) * sig * (1 - sig) * a
-            second_term = ((1-c) / (1- b - (1-b) * sig)) * sig * (1-sig) * a
-            grad_theta[user_id] += first_term + second_term
+            common_factor = (c - prob_correct) / (prob_correct * (1-prob_correct))
+            grad_theta[user_id] += common_factor * (1-b) * sig * (1-sig) * a
 
         new_theta = self.theta + lr * grad_theta
 
@@ -139,12 +140,16 @@ class QuestionIRT:
             c = is_correct[i]
             a = self.a_list[quest_id]
             b = self.b_list[quest_id]
-
+            
             diff = new_theta[user_id] - self.beta[quest_id]
             sig = sigmoid(a * diff)
-            first_term = (c / (b + (1-b) * sig)) * sig * (1-sig) * (-a)
-            second_term = ((1-c) / (1 - b - (1-b) * sig)) * sig * (1-sig) * (-a)
-            grad_beta[quest_id] += first_term + second_term
+            prob_correct = b + (1-b) * sig
+            prob_correct = np.clip(prob_correct, 1e-9, 1-1e-9)
+
+            # CORRECTED GRADIENT CALCULATION
+            common_factor = (c - prob_correct) / (prob_correct * (1-prob_correct))
+            grad_beta[quest_id] += common_factor * (1-b) * sig * (1-sig) * (-a)
+
 
         new_beta = self.beta + lr * grad_beta
 
@@ -157,12 +162,15 @@ class QuestionIRT:
             c = is_correct[i]
             a = self.a_list[quest_id]
             b = self.b_list[quest_id]
-
+            
             diff = new_theta[user_id] - new_beta[quest_id]
             sig = sigmoid(a * diff)
-            first_term = (c / (b + (1-b) * sig)) * sig * (1-sig) * (1-b) * diff
-            second_term = ((1-c) / (1 - b - (1-b) * sig)) * sig * (1-sig) * (b-1) * diff
-            grad_a_list[quest_id] += first_term + second_term
+            prob_correct = b + (1-b) * sig
+            prob_correct = np.clip(prob_correct, 1e-9, 1-1e-9)
+
+            # CORRECTED GRADIENT CALCULATION
+            common_factor = (c - prob_correct) / (prob_correct * (1-prob_correct))
+            grad_a_list[quest_id] += common_factor * (1-b) * sig * (1-sig) * diff
 
         new_a_list = self.a_list + (lr / 10) * grad_a_list
 
@@ -178,11 +186,12 @@ class QuestionIRT:
             
             diff = new_theta[user_id] - new_beta[quest_id]
             sig = sigmoid(a * diff)
+            prob_correct = b + (1-b) * sig
+            prob_correct = np.clip(prob_correct, 1e-9, 1-1e-9)
 
-            first_term = (c / (b + (1-b) * sig)) * (1-sig)
-            second_term = ((1-c) / (1 - b - (1-b) * sig)) * sig
-
-            grad_b_list[quest_id] += first_term + second_term
+            # CORRECTED GRADIENT CALCULATION
+            common_factor = (c - prob_correct) / (prob_correct * (1-prob_correct))
+            grad_b_list[quest_id] += common_factor * (1 - sig)
             
         new_b_list = self.b_list + (lr / 25) * grad_b_list
 
@@ -191,7 +200,7 @@ class QuestionIRT:
         self.beta = new_beta
         self.a_list = new_a_list
         self.b_list = new_b_list
-        
+
         # Clip parameters to reasonable ranges
         self.b_list = np.clip(self.b_list, 0.0, 0.35)
 
@@ -241,7 +250,7 @@ class QuestionIRT:
             # Compute metrics
             neg_lld = self.neg_log_likelihood(train_data)
             train_nll.append(neg_lld)
-            
+
             neg_lld_val = self.neg_log_likelihood(val_data)
             val_nll.append(neg_lld_val)
 
@@ -250,11 +259,11 @@ class QuestionIRT:
 
             # Update parameters
             self.update_parameters(train_data, lr)
-            
+
             # Print progress
-            if (i + 1) % 1000 == 0:
-                print(f"Iteration {i + 1}: Train NLL={neg_lld:.4f}, "
-                      f"Val NLL={neg_lld_val:.4f}, Val Acc={score:.4f}")
+
+            print(f"Iteration {i + 1}: Train NLL={neg_lld:.4f}, "
+                    f"Val NLL={neg_lld_val:.4f}, Val Acc={score:.4f}")
 
         return train_nll, val_nll, val_acc_lst
 
@@ -301,8 +310,8 @@ def main():
     print(f"Model initialized with {num_students} students and {num_questions} questions")
 
     # Train model
-    lr = 0.0001
-    iterations = 5000
+    lr = 0.001
+    iterations = 300
 
     train_nll, val_nll, val_acc_lst = model.fit(train_data, val_data, lr, iterations)
 

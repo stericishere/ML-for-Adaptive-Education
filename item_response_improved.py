@@ -195,11 +195,9 @@ def irt(data, val_data, lr, iterations):
         score = evaluate(data=val_data, theta=theta, beta=beta, a_list=a_list, b_list=b_list)
         val_acc_lst.append(score)
 
-
-
         theta, beta, a_list, b_list = update_theta_beta(data, lr, theta, beta, a_list, b_list) #update params
         b_list = np.clip(b_list, 0.0, 0.35) #makes sure the guessing rate stays reasonable
-
+        print(f"train:{neg_lld}, validation:{neg_lld_val}")
 
     # TODO: You may change the return values to achieve what you want.
     return theta, beta, val_acc_lst, train_nll, val_nll, a_list, b_list
