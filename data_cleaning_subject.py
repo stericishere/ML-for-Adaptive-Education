@@ -47,7 +47,7 @@ def _load_question_meta_csv(path):
 # /data/subject_meta.csv
 
 def load_question_meta(root_dir="./data"):
-    path = os.path.join(root_dir, "question_meta.csv")
+    path = os.path.join(root_dir, "question_meta_sorted.csv")
     if not os.path.exists(path):
         raise Exception("The specified path {} does not exist.".format(path))
     data = _load_question_meta_csv(path)
@@ -73,13 +73,23 @@ def subject_that_exist(question_meta: Dict[int, List[int]]):
                 cleaned_data.add(question_id)
     return cleaned_data
 
-def write_to_csv(path = "./data/cleaned_subject_meta.csv"):
+def write_to_csv(path = "data/cleaned_subject_meta.csv"):
+    path2 = "./data/clean_question_meta.csv"
     with open(path, "w") as csv_file:
         writer = csv.writer(csv_file)
         cleaned_data = subject_that_exist(load_question_meta())
         subject = load_subject_meta_csv()
+        question = load_question_meta()
         for i, subject_id in enumerate(cleaned_data):
             writer.writerow([i, subject[subject_id]])
+            for j in range(len(question.keys())):
+                if subject_id in question[j]:
+                    question[j] = [i if s == subject_id else s for s in question[j]]
+        with open(path2, "w") as csv_file2:
+            writer2 = csv.writer(csv_file2)
+            for key, value in question.items():
+                writer2.writerow([key, value])
+                        
 
 def main():
     write_to_csv()
