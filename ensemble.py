@@ -57,7 +57,7 @@ def run_ensemble():
     # === KNN ===
     print("Running model KNN...")
     from sklearn.impute import KNNImputer
-    imputer = KNNImputer(n_neighbors=21)  # k*=21, optimal k found in knn
+    imputer = KNNImputer(n_neighbors=11)  # k*=11, optimal k found in knn
     # --- Apply bootstrap to training data ---
     knn_data = bootstrap_data(train_data)
     # create matrix filled with NaN values
@@ -148,4 +148,5 @@ def run_ensemble():
     print(f"Ensemble test accuracy: {ensemble_test_acc:.4f}")
 
 if __name__ == "__main__":
+
     run_ensemble()
