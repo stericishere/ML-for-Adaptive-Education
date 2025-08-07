@@ -212,8 +212,8 @@ def main():
     # Tune learning rate and number of iterations. With the implemented #
     # code, report the validation and test accuracy.                    #
     #####################################################################
-    lr = 0.01
-    iterations = 50
+    lr = 0.001
+    iterations = 500
 
     theta, beta, val_acc_lst, train_nll, val_nll = irt(train_data, val_data, lr, iterations)
 
