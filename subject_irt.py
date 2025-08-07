@@ -241,14 +241,14 @@ class SubjectIRT:
         self.b_list += lr * grad_b / 25  # Even smaller for guessing
         
         # Clip parameters to reasonable ranges
-        # self.b_list = np.clip(self.b_list, 0.0, 0.35)
-        # self.a_list = np.clip(self.a_list, 0.1, 3.0)
+        self.b_list = np.clip(self.b_list, 0.0, 0.35)
+        self.a_list = np.clip(self.a_list, 0.1, 3.0)
         
         # Handle unencountered subjects with regularization towards global mean
         self.student_subject_counts += subject_encounter_counts
         unencountered_mask = self.student_subject_counts == 0
         if np.any(unencountered_mask):
-            global_mean = np.mean(self.theta[self.student_subject_counts > 0])
+            global_mean = np.mean(self.theta[self.student_subject_counts > 0], axis=0)
             regularization_penalty = 0.01
             self.theta[unencountered_mask] += regularization_penalty * (global_mean - self.theta[unencountered_mask])
     
@@ -339,7 +339,7 @@ def main():
     
     # Train model
     lr = 0.001
-    iterations = 2000
+    iterations = 850
     
     train_nll, val_nll, val_acc = model.fit(train_data, val_data, lr, iterations)
     
@@ -363,7 +363,7 @@ def main():
     plt.plot(val_nll, label="Validation NLL", color="red")
     plt.xlabel("Iteration")
     plt.ylabel("Negative Log-Likelihood")
-    plt.title("Training Curve")
+    plt.title("Training Curve for subject IRT")
     plt.legend()
     
     plt.subplot(1, 2, 2)

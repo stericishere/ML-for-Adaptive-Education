@@ -313,7 +313,7 @@ def main():
     lr = 0.001
     iterations = 300
 
-    train_nll, val_nll, val_acc_lst = model.fit(train_data, val_data, lr, iterations)
+    train_nll, val_nll, val_acc = model.fit(train_data, val_data, lr, iterations)
 
     # Final evaluation
     final_val_acc = model.evaluate(val_data)
@@ -329,13 +329,25 @@ def main():
     
     # Plot training curves
     x_vals = list(range(1, iterations + 1))
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(12, 4))
+    plt.subplot(1, 2, 1)
+
     plt.scatter(x_vals, train_nll, color="blue", label="Train NLL", s=25)
     plt.scatter(x_vals, val_nll, color="red", label="Validation NLL", s=25)
     plt.xlabel("Iteration #")
     plt.ylabel("Negative Log-Likelihood")
-    plt.title("Training Curve")
+    plt.title("Training Curve of question IRT")
     plt.legend()
+    
+    
+    plt.subplot(1, 2, 2)
+    plt.plot(val_acc, label="Validation Accuracy", color="green")
+    plt.xlabel("Iteration")
+    plt.ylabel("Accuracy")
+    plt.title("Validation Accuracy")
+    plt.legend()
+    
+    plt.tight_layout()
     plt.show()
 
 if __name__ == "__main__":
