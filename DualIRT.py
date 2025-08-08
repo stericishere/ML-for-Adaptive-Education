@@ -153,6 +153,7 @@ def main():
     test_accuracy = dual_model.evaluate(test_data, best_weight)
     print(f"Test Accuracy: {test_accuracy:.4f}")
 
+    print(f"\nFinal Validation Accuracy: {final_val_acc:.4f}")
     print(f"Best Dual Model weight={best_weight:.1f}): {test_accuracy:.4f}")
 
 if __name__ == "__main__":
