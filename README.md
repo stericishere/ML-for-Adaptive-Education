@@ -2,14 +2,14 @@
 
 [](https://github.com/stericishere/Machine-Learning-Model-for-Adaptive-Education)
 
-\<p align="center"\>
-\<img src="[https://img.shields.io/badge/Python-3776AB?logo=python\&logoColor=white](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)" alt="Python"/\>
-\<img src="[https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch\&logoColor=white](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)" alt="PyTorch"/\>
-\<img src="[https://img.shields.io/badge/Numpy-013243?logo=numpy\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/Numpy-013243%3Flogo%3Dnumpy%26logoColor%3Dwhite)" alt="Numpy"/\>
-\<img src="[https://img.shields.io/badge/SciPy-8DBC30?logo=scipy\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/SciPy-8DBC30%3Flogo%3Dscipy%26logoColor%3Dwhite)" alt="SciPy"/\>
-\<img src="https://[https://img.shields.io/badge/scikit--learn-F7931E?logo=scikit-learn\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/scikit--learn-F7931E%3Flogo%3Dscikit-learn%26logoColor%3Dwhite)" alt="scikit-learn"/\>
-\<img src="[https://img.shields.io/badge/Matplotlib-5A95CD?logo=matplotlib\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/Matplotlib-5A95CD%3Flogo%3Dmatplotlib%26logoColor%3Dwhite)" alt="Matplotlib"/\>
-\</p\>
+<p align="center"\>
+<img src="[https://img.shields.io/badge/Python-3776AB?logo=python\&logoColor=white](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)" alt="Python"/\>
+<img src="[https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch\&logoColor=white](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)" alt="PyTorch"/\>
+<img src="[https://img.shields.io/badge/Numpy-013243?logo=numpy\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/Numpy-013243%3Flogo%3Dnumpy%26logoColor%3Dwhite)" alt="Numpy"/\>
+<img src="[https://img.shields.io/badge/SciPy-8DBC30?logo=scipy\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/SciPy-8DBC30%3Flogo%3Dscipy%26logoColor%3Dwhite)" alt="SciPy"/\>
+<img src="https://[https://img.shields.io/badge/scikit--learn-F7931E?logo=scikit-learn\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/scikit--learn-F7931E%3Flogo%3Dscikit-learn%26logoColor%3Dwhite)" alt="scikit-learn"/\>
+<img src="[https://img.shields.io/badge/Matplotlib-5A95CD?logo=matplotlib\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/Matplotlib-5A95CD%3Flogo%3Dmatplotlib%26logoColor%3Dwhite)" alt="Matplotlib"/\>
+</p\>
 
 A collection of machine learning models for adaptive education, designed to predict student performance on a set of questions. The project implements and evaluates various models, including KNN, Item Response Theory, Neural Networks, and a final ensemble model.
 
