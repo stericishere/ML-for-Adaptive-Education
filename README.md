@@ -2,7 +2,7 @@ Here’s a polished rewrite of your README that makes it **cleaner, more profess
 
 ---
 
-# Machine Learning Models for Adaptive Education
+# ML for Adaptive Education
 
 [![GitHub](https://img.shields.io/badge/GitHub-AdaptiveEducation-blue?logo=github)](https://github.com/utmgdsc/adaptive-education)
 
