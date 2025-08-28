@@ -139,7 +139,7 @@ adaptive-education/
 ├── knn.py                  # KNN implementation
 ├── item_response.py        # IRT model
 ├── neural_network.py       # AutoEncoder NN
-├── matrix_factorization.py # Matrix Factorization
+├── matrix_factorization.py # SVD
 ├── part b/                 # Additional models
 │   ├── DualIRT.py
 │   ├── demo_dual_irt.py
